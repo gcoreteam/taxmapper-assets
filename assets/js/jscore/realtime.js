@@ -64,22 +64,73 @@ function realtimeStruk() {
                 $('.tot_pajak').text('Total Pajak Rp. '+parseFloat(totalTax).toLocaleString(['ban', 'id']));
 
             }
-         }else{
-         const delayBetweenEntries = 1000; // Delay in milliseconds
-            // const delayBetweenEntries = 500; // Delay in milliseconds
+            
+            var table = $('#rtStrukTable').DataTable();
+            var data = table.rows().data().toArray();
+            var firstTenData = data.slice(0, 10);
+            
+            var textArr = firstTenData.map(item => item.no_struk);
+            let text = textArr.join();
+            
+            $('#previousNoStruk').val(text);
+            // console.log(text);
 
+         }else{
+            const delayBetweenEntries = 1000; // Delay in milliseconds
+            let totalAddTax = 0;
+            let totalAddDpp = 0;
+            let totalAddOmzet = 0;
+            let totalDelay = 0;
+            
             result.data.forEach((entry, index) => {
+                const tax = Number(entry.tax);
+                const dpp = tax * 10;
+                const omzet = dpp + tax;
+                
+                totalAddTax += tax;
+                totalAddDpp += dpp;
+                totalAddOmzet += omzet;
+                totalDelay += delayBetweenEntries;
+                
                setTimeout(() => {
                   addEntryWithAnimation(entry);
                }, index * delayBetweenEntries);
+               
             });
+            
+            let currentDpp = Number($('#val_dpp_cur').val()) + totalAddDpp;
+			let currentTax = Number($('#val_tax_cur').val()) + totalAddTax;
+		    let currentOmzet = Number($('#val_total_cur').val()) + totalAddOmzet;
+		    
+		    let loadTime = 0;
+		    if (totalDelay > 0) {
+		        loadTime = totalDelay / (1000 * 60)
+		    }
+		    
+		    animationNumber('dpp_cur', currentDpp, loadTime);
+			animationNumber('tax_cur', currentTax, loadTime);
+			animationNumber('total_cur', currentOmzet, loadTime);
+			$('#val_dpp_cur').val(currentDpp);
+			$('#val_tax_cur').val(currentTax);
+			$('#val_total_cur').val(currentOmzet);
+			
+// 			var progress_cur = '<div class="progress" >' +
+// 				'<span style="width: ' + parseFloat(result.nilai_prcnt_cur) + '%;" class="progress-bar progress-bar-success red">' +
+// 				'</span>' +
+// 				'</div>' +
+// 				'<div class="status">' +
+// 				'<div class="status-title"> Target </div>' +
+// 				'<div class="status-number"> ' + parseFloat(result.nilai_prcnt_cur) + '% </div>' +
+// 				'</div>';
+
+// 			$('#progress_cur').html(progress_cur)
          }
       }
    });
 }
 
 
-var interval = (2*1000*60); //1000 = 1 detik
+var interval = (3*1000*60); //1000 = 1 detik
 setInterval(realtimeStruk, interval);
 // progressLoad('progressRealtimeStruk',10);
 
@@ -90,7 +141,7 @@ function addEntryWithAnimation(entry) {
         var audio = $('#myAudio')[0]; // Ambil elemen audio
         audio.play();
     }
-    showToast('Rp. '+Math.ceil(entry.tax).toLocaleString(['ban', 'id']),'Pajak Masuk dari <b>'+entry.nama_objek_pajak+'</b><br/>Pada Jam <b>'+entry.jam+'</b>');
+    showToast('Rp. '+Math.ceil(entry.tax).toLocaleString(['ban', 'id']),'No Struk <b>['+entry.no_struk+']</b><br/> Pajak Masuk dari <b>'+entry.nama_objek_pajak+'</b><br/>Pada Jam <b>'+entry.jam+'</b>');
     var table = $('#rtStrukTable').DataTable();
     var totalTax = parseFloat($('#tot_pajak').val());
     var row = [entry];
@@ -157,6 +208,7 @@ function rtOPData(type) {
     // });
 }
 function addOpData(entry,tdy,ytd) {
+    var typeOpData = $('#typeOpData').val();
    var table = $('#rtOPData').DataTable(
       
    {
@@ -165,7 +217,7 @@ function addOpData(entry,tdy,ytd) {
            { "type": "num-fmt", "targets": 1 } // Kolom pertama (indeks 0) dianggap sebagai data numerik
        ],
    });
-   var namaObjekPajakDiv = $('<div style="color:green" onclick="detailOP(\''+entry.id_objek_pajak+'\',\''+entry.niop+'\',\''+entry.nama_objek_pajak+'\',\''+ytd+'\',\''+tdy+'\')">').text(entry.nama_objek_pajak);
+   var namaObjekPajakDiv = $('<div style="color:green" onclick="detailOP(\''+entry.id_objek_pajak+'\',\''+entry.niop+'\',\''+entry.nama_objek_pajak+'\',\''+typeOpData+'\')">').text(entry.nama_objek_pajak);
    // console.log(namaObjekPajakDiv);
    table.row.add([
       namaObjekPajakDiv.prop('outerHTML'),
